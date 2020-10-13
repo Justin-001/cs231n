@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from past.builtins import xrange
 
+
 class TwoLayerNet(object):
     """
     A two-layer fully-connected neural network. The net has an input dimension of
@@ -80,7 +81,9 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        hidden_scores = X.dot(W1) + b1
+        hidden_scores[np.where(hidden_scores <= 0)] = 0  # Relu max(0, x)
+        scores = hidden_scores.dot(W2) + b2
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -98,7 +101,23 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        N = scores.shape[0]
+        '''
+        scores -= np.reshape(np.max(scores, axis=1), [N, 1])
+        
+        correct_class_exp_scores = np.exp(scores[np.arange(
+            N), y[np.arange(N)]])
+        total_exp_score = np.sum(np.exp(scores), axis=1)
+        loss = np.sum(-np.log(correct_class_exp_scores/total_exp_score))
+        loss /= N
+        loss += reg*(np.sum(W1**2)+np.sum(W2**2))
+        '''
+        scores -= np.max(scores, axis=1, keepdims=True)
+        scores_exp = np.exp(scores)
+        softmax_matrix = scores_exp / np.sum(scores_exp, axis=1, keepdims=True)
+        loss = np.sum(-np.log(softmax_matrix[np.arange(N), y]))
+        loss /= N
+        loss += reg*(np.sum(W1**2)+np.sum(W2**2))
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -111,7 +130,17 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        softmax_matrix[np.arange(N), y] -= 1
+        dW2 = hidden_scores.T.dot(softmax_matrix) / N + 2 * reg * W2
+        db2 = np.sum(softmax_matrix, axis=0) / N
+
+        dz = softmax_matrix.dot(W2.T)
+        hidden_scores = X.dot(W1) + b1
+        dz[np.where(hidden_scores <= 0)] = 0
+        dW1 = X.T.dot(dz) / N + 2 * reg * W1
+        db1 = np.sum(dz, axis=0) / N
+
+        grads = {'W1': dW1, 'b1': db1, 'W2': dW2, 'b2': db2}
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -138,8 +167,8 @@ class TwoLayerNet(object):
         - batch_size: Number of training examples to use per step.
         - verbose: boolean; if true print progress during optimization.
         """
-        num_train = X.shape[0]
-        iterations_per_epoch = max(num_train / batch_size, 1)
+        N = X.shape[0]
+        iterations_per_epoch = max(N / batch_size, 1)
 
         # Use SGD to optimize the parameters in self.model
         loss_history = []
@@ -191,9 +220,9 @@ class TwoLayerNet(object):
                 learning_rate *= learning_rate_decay
 
         return {
-          'loss_history': loss_history,
-          'train_acc_history': train_acc_history,
-          'val_acc_history': val_acc_history,
+            'loss_history': loss_history,
+            'train_acc_history': train_acc_history,
+            'val_acc_history': val_acc_history,
         }
 
     def predict(self, X):
