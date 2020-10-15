@@ -1,4 +1,8 @@
 {
     "python.pythonPath": "D:\\Anaconda3\\envs\\cs231n\\python.exe",
-    "python.dataScience.jupyterServerURI": "local"
+    "python.dataScience.jupyterServerURI": "local",
+    "javascript.validate.enable": false,
+    "python.formatting.autopep8Args": [
+        "\"--max-line-length=200\""
+    ]
 }
